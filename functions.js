@@ -7,10 +7,6 @@ config();
 const _env = process.env;
 const chromePath = _env.CHROME_PATH;
 
-const clientId = _env.CLIENT_ID;
-const clientSecret = _env.CLIENT_SECRET;
-const refreshToken = _env.REFRESH_TOKEN;
-
 
 const randomString = () => {
     const str = "qwertyuiopasdfghjklzxcvbnm";
@@ -23,32 +19,29 @@ const randomString = () => {
 
 export const writeFile = (url, callback) => {
     let _path = randomString();
-    fs.mkdir("./public/" + _path, (err) => {
+    fs.writeFile("./public/" + _path + ".html", 
+    `
+    <!DOCTYPE html>
+    <html lang="en" dir="ltr">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="refresh" content="0; url=${url}">
+        <title>Redirecting to ${url}</title>
+    </head>
+    <body>
+        <p>Redirecting to ${url}</p>
+    </body>
+    </html>
+    `, (err) => {
         if(err) throw err;
-        fs.writeFile("./public/" + _path + "/index.html", 
-        `
-        <!DOCTYPE html>
-        <html lang="en" dir="ltr">
-        <head>
-            <meta charset="UTF-8">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <meta http-equiv="refresh" content="0; url=${url}">
-            <title>Redirecting to ${url}</title>
-        </head>
-        <body>
-            <p>Redirecting to ${url}</p>
-        </body>
-        </html>
-        `, (err) => {
-            if(err) throw err;
-            callback(_path)
-        })
+        callback(_path)
     })
 }
 
 const deleteFile = path => {
-    fs.rmdir("./public/" + path, (err) => {
+    fs.unlink("./public/" + path + ".html", (err) => {
         if(err) throw err
     })
 }
@@ -58,7 +51,7 @@ const extractVerificationCode = str => {
     return str.match(pattern)[0];
 }
 
-const listenMail = (callback) => {
+const checkMailForVerificationCode = (callback) => {
     const imap = {
         user: _env.EMAIL,
         password : _env.G_PASS,
@@ -66,7 +59,7 @@ const listenMail = (callback) => {
         port: 993,
         tls: true,
         searchFilter: ["NEW", "UNSEEN", ["SINCE", new Date().toUTCString()]],
-          tlsOptions: { rejectUnauthorized: false }
+        tlsOptions: { rejectUnauthorized: false }
     };
     
     notifier(imap).on('mail',function(mail){
@@ -76,20 +69,11 @@ const listenMail = (callback) => {
     }).start()
 }
 
-//check if verification page before verifying 
-
-//listenMail();
-
 const pushToGithub = async path => {
     let launchOptions = {  headless : false,
         executablePath: chromePath,
         args: ['--start-maximized']
     };
-
-    let res = {
-        isSuccess : false,
-        twoFAenabled : false
-    }
 
     const browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
@@ -100,13 +84,60 @@ const pushToGithub = async path => {
             ('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' +
             '(KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36');
 
-    await page.goto("https://github.com/login");
-
-    await page.type("#login_field", _env.EMAIL, {delay : 4});
-    await page.type("#password", _env.PASS, {delay : 3});
-
-    await page.click("input[type='submit']", {delay : 2});
+    const login = (async () => {
+        await page.goto("https://github.com/login");
+    
+        await page.type("#login_field", _env.EMAIL);
+        await page.type("#password", _env.PASS);
+    
+        await page.click("input[type='submit']", {delay : 2});
+    
+        const commit = async () => {
+            await page.goto("https://github.com/udezueoluomachi/uarel/upload/main/s");
+    
+            const fileInput = await page.$("input[type='file']");
+            await fileInput.uploadFile("./public/" + path + ".html");
+            page.waitForNetworkIdle({idleTime : 2000, timeout : 10000})
+            .then(async () => {
+                await page.type("#commit-summary-input",": Api");
+                await page.click("button.js-blob-submit.btn-primary.btn",{delay : 10});
+            })
+        }
+    
+        page.waitForNavigation({timeout : 90000})
+        .then(async () => {
+            let pageUrl = page.url();
+            let verificationUrl = "https://github.com/sessions/verified-device"
+            let veryCodeInput = "#otp";
+            let submitBtn = "button[type='submit']";
+    
+            if(pageUrl == verificationUrl) {
+                checkMailForVerificationCode( async code => {
+                    await page.type(veryCodeInput, code, {delay : 4});
+    
+                    await page.click(submitBtn, {delay : 2});
+    
+                    page.waitForNavigation({timeout : 90000})
+                    .then(async () => {
+                        commit();
+                    })
+                })
+            }
+            else if (pageUrl == "https://github.com/session") {
+                login();
+            }
+            else {
+                commit();
+            }
+        });
+    })();
 
     //await browser.close();
 }
-//pushToGithub();
+
+try {
+    pushToGithub("hello");
+}
+catch(err) {
+    console.error(err)
+}
