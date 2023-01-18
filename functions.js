@@ -70,9 +70,10 @@ const checkMailForVerificationCode = (callback) => {
 }
 
 export const pushToGithub = async (path,callback) => {
-    let launchOptions = {  headless : false,
+    let launchOptions = {  
         executablePath: chromePath,
-        args: ['--start-maximized']
+        args: ['--start-maximized' , '--no-sandbox', '--disable-setuid-sandbox'],
+        ignoreDefaultArgs: ['--disable-extensions']
     };
 
     const browser = await puppeteer.launch(launchOptions);
