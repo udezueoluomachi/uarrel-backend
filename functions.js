@@ -69,7 +69,7 @@ const checkMailForVerificationCode = (callback) => {
     }).start()
 }
 
-const pushToGithub = async path => {
+export const pushToGithub = async (path,callback) => {
     let launchOptions = {  headless : false,
         executablePath: chromePath,
         args: ['--start-maximized']
@@ -97,11 +97,13 @@ const pushToGithub = async path => {
     
             const fileInput = await page.$("input[type='file']");
             await fileInput.uploadFile("./public/" + path + ".html");
-            page.waitForNetworkIdle({idleTime : 2000, timeout : 10000})
-            .then(async () => {
+            setTimeout(async () => {
                 await page.type("#commit-summary-input",": Api");
-                await page.click("button.js-blob-submit.btn-primary.btn",{delay : 10});
-            })
+                await page.click("button.js-blob-submit.btn-primary.btn");
+                await browser.close();
+                deleteFile(path);
+                callback();
+            }, 4000)
         }
     
         page.waitForNavigation({timeout : 90000})
@@ -114,8 +116,9 @@ const pushToGithub = async path => {
             if(pageUrl == verificationUrl) {
                 checkMailForVerificationCode( async code => {
                     await page.type(veryCodeInput, code, {delay : 4});
-    
-                    await page.click(submitBtn, {delay : 2});
+
+                    //github auto submits the form after being filled
+                 //   await page.click(submitBtn, {delay : 2});
     
                     page.waitForNavigation({timeout : 90000})
                     .then(async () => {
@@ -131,13 +134,4 @@ const pushToGithub = async path => {
             }
         });
     })();
-
-    //await browser.close();
-}
-
-try {
-    pushToGithub("hello");
-}
-catch(err) {
-    console.error(err)
 }

@@ -12,6 +12,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "f" : "node functions.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

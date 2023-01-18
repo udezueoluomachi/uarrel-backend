@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import {config} from "dotenv";
+import {pushToGithub, writeFile} from "./functions.js";
 config();
 
 const _env = process.env;
@@ -18,8 +19,12 @@ app.post("/", (req, res) => {
         try {
             let parsedData = JSON.parse(body);
             if(parsedData.urlInput) {
-                res.status(200).json({
-                    url : "http://localhost:5500"
+                writeFile(parsedData.urlInput, path => {
+                    pushToGithub(path, () => {
+                        res.status(200).json({
+                            url : "https://udezueoluomachi.github.io/uarel/s/" + path + ".html"
+                        })
+                    })
                 })
             }
             else {
