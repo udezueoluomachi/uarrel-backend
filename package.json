@@ -5,6 +5,9 @@
     "express": "^4.18.1",
     "mail-notifier": "^0.5.0",
     "nosql-json-db": "^1.0.0",
+    "puppeteer": "^19.5.2"
+  },
+  "dev-dependencies" : {
     "puppeteer-core": "^19.5.2"
   },
   "type": "module",
@@ -12,7 +15,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "f" : "node functions.js",
+    "f": "node functions.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

@@ -1,7 +1,7 @@
 import {config} from "dotenv";
 import fs from "fs";
 import notifier from "mail-notifier";
-import puppeteer from "puppeteer-core";
+import puppeteer from "puppeteer";
 config();
 
 const _env = process.env;
@@ -71,7 +71,6 @@ const checkMailForVerificationCode = (callback) => {
 
 export const pushToGithub = async (path,callback) => {
     let launchOptions = {  
-        executablePath: chromePath,
         args: ['--start-maximized' , '--no-sandbox', '--disable-setuid-sandbox'],
         ignoreDefaultArgs: ['--disable-extensions']
     };
