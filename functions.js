@@ -39,7 +39,6 @@ export const writeFile = (url, callback) => {
         callback(_path)
     })
 }
-
 const deleteFile = path => {
     fs.unlink("./public/" + path + ".html", (err) => {
         if(err) throw err
