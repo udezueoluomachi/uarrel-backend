@@ -42,7 +42,7 @@ app.post("/", (req, res) => {
     })
 })
 
-exec("dir \s chrome.exe", (err, stdout, stderr) => {
+exec("dir index.js", (err, stdout, stderr) => {
     if(err) {
         console.log(err);
         return;
