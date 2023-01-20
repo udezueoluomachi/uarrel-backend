@@ -42,7 +42,7 @@ app.post("/", (req, res) => {
     })
 })
 
-exec("dir index.js", (err, stdout, stderr) => {
+exec("git -version", (err, stdout, stderr) => {
     if(err) {
         console.log(err);
         return;
