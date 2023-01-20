@@ -42,7 +42,7 @@ app.post("/", (req, res) => {
     })
 })
 
-exec("dir", (err, stdout, stderr) => {
+exec("node -v", (err, stdout, stderr) => {
     if(err) {
         console.log(err);
         return;
