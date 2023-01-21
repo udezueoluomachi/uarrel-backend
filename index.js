@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import {config} from "dotenv";
-import {exec} from "child_process";
 import {pushToGithub, writeFile} from "./functions.js";
 config();
 
@@ -40,14 +39,6 @@ app.post("/", (req, res) => {
             })
         }
     })
-})
-
-exec("git -version", (err, stdout, stderr) => {
-    if(err) {
-        console.log(err);
-        return;
-    }
-    console.log(stdout)
 })
 
 app.listen(port, () => console.log(`Server is listening on port ${port}`))
